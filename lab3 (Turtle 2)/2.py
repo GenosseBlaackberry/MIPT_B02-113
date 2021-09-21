@@ -1,4 +1,5 @@
 import turtle as t
+
 def artist(a):
     for i in a:
         t.penup()
@@ -88,3 +89,8 @@ _9 = [(-90, 100, 0),
 
 for i in '141700':
       artist(eval('_'+i))
+
+t.goto(0, -110)
+
+for i in input():
+      artist(eval('_' + i))

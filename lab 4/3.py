@@ -85,7 +85,7 @@ def bebras():
 def __Main__():
     screenfill((650, 850))
     bebras()
-    sun((305, 80))
+    sun((300, 80))
     FPS(10)
 
 __Main__()

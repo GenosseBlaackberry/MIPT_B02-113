@@ -33,8 +33,18 @@ def fibsh(cd):
                                     ((cd[0] + 20)*cd[2]*cd[3], (cd[1] + 6)*cd[2]),
                                     ((cd[0] + 20)*cd[2]*cd[3], (cd[1] + 14)*cd[2])))
 
+def fibshes(cd):
+    fibsh(((cd[0] + 320) * cd[2] * cd[3], (cd[1] + 300) * cd[2], cd[2] * cd[3]))
+    fibsh(((cd[0] + 400) * cd[2] * cd[3], (cd[1] + 305) * cd[2], cd[2] * cd[3] * (-1)))
+    fibsh(((cd[0] + 360) * cd[2] * cd[3], (cd[1] + 290) * cd[2], cd[2] * cd[3]))
+    fibsh(((cd[0] + 380) * cd[2] * cd[3], (cd[1] + 295) * cd[2], cd[2] * cd[3] * (-1)))
+    fibsh(((cd[0] + 240) * cd[2] * cd[3], (cd[1] + 200) * cd[2], cd[2] * cd[3]))
+    fibsh(((cd[0] + 280) * cd[2] * cd[3], (cd[1] + 180) * cd[2], cd[2] * cd[3]))
+    fibsh(((cd[0] + 330) * cd[2] * cd[3], (cd[1] + 190) * cd[2], cd[2] * cd[3]))
+
 def bebr(cd):
     cd = (cd[0] / cd[2], cd[1] / abs(cd[2]), abs(cd[2]), cd[2]/abs(cd[2]))
+    fibshes(cd)
     line(screen, (0, 0, 0), ((cd[0] + 160)*cd[2]*cd[3], (cd[1] + 200)*cd[2]),
          ((cd[0] + 310)*cd[2]*cd[3], (cd[1] - 100)*cd[2]), max(int(5*cd[2]), 1))
     ellipse(screen, (70, 70, 100), ((cd[0] + 260)*cd[2]*cd[3], (cd[1] + 210)*cd[2], 120*cd[2]*cd[3], 50*cd[2]))
@@ -52,8 +62,6 @@ def bebr(cd):
     ellipse(screen, (0, 0, 0), ((cd[0] + 190)*cd[2]*cd[3], (cd[1] - 10)*cd[2], 10*cd[2]*cd[3], 10*cd[2]))
     ellipse(screen, (0, 0, 0), ((cd[0] + 120)*cd[2]*cd[3], (cd[1] - 20)*cd[2], 5*cd[2]*cd[3], 5*cd[2]))
 
-    fibsh(((cd[0] + 320)*cd[2]*cd[3], (cd[1] + 300)*cd[2], cd[2]*cd[3]))
-
 def sun(cd):
     ellipse(screen, (255, 255, 0), (cd[0], cd[1], 60, 60))
     ellipse(screen, (100, 100, 255), (cd[0] + 5, cd[1] + 5, 50, 50))
@@ -68,10 +76,18 @@ def FPS(FPS, finished = False, clock = pygame.time.Clock()):
                 finished = True
     pygame.quit()
 
+def bebras():
+    bebr((400, 500, -0.5))
+    bebr((500, 400, -0.25))
+    bebr((20, 600, 0.75))
+    bebr((650, 800, -1))
+
 def __Main__():
     screenfill((650, 850))
-    bebr((80, 320, 1))
+    bebras()
     sun((305, 80))
     FPS(10)
 
 __Main__()
+
+

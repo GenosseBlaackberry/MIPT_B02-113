@@ -16,7 +16,7 @@ GREEN = 0x00FF00
 MAGENTA = 0xFF03B8
 CYAN = 0x00FFCC
 BLACK = (0, 0, 0)
-WHITE = 0xFFFFFF
+WHITE = (255, 255, 255)
 GREY = 0x7D7D7D
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
 
@@ -27,7 +27,7 @@ GRAVITY_TENSION = 1
 
 
 class Object:
-    def __init__(self, screen: pygame.Surface, x, y, r, vx=0, vy=0):
+    def __init__(self, screen: pygame.Surface, x, y, vx, vy):
         """ Конструктор класса ball
 
         Args:
@@ -37,12 +37,8 @@ class Object:
         self.screen = screen
         self.x = x
         self.y = y
-        self.r = r
         self.vx = vx
         self.vy = vy
-        self.color = choice(GAME_COLORS)
-        self.live = 30
-
 
     def move(self, gravity=0):
         """Переместить мяч по прошествии единицы времени.
@@ -63,8 +59,13 @@ class Object:
         self.x += self.vx
 
 
-
 class Bullet(Object):
+    def __init__(self, screen: pygame.Surface, x, y, r, vx, vy):
+        super().__init__(screen, x, y, vx, vy)
+        self.r = r
+        self.color = choice(GAME_COLORS)
+        self.live = 30
+
     def move_bullet(self):
         super().move(GRAVITY_TENSION)
 
@@ -76,7 +77,8 @@ class Bullet(Object):
         Returns:
             Возвращает True в случае столкновения мяча и цели. В противном случае возвращает False.
         """
-        return False
+        if (self.x - obj.x)**2 + (self.y - obj.y)**2 <= (self.r + obj.r)**2:
+            obj.hit()
 
     def draw(self):
         pygame.draw.circle(
@@ -88,29 +90,64 @@ class Bullet(Object):
 
 
 class Target(Object):
-    # self.points = 0
-    # self.live = 1
-    # self.new_target()
-    def hit(self, points=1):
+    def __init__(self, screen, x, y, vx, vy, live):
+        """ Инициализация новой цели. """
+        super().__init__(screen, x, y, vx, vy)
+        self.live = live
+        self.targettype = 'None'
+
+    def hit(self):
         """Попадание шарика в цель."""
-        self.points += points
+        global points
+        global prev_points
+        prev_points = points
+        points += 1
+        self.live -= 1
+        if self.live == 0:
+            self.new_target()
+
+    def new_target(self):
+        if self.targettype == 'Ball':
+            new_target = Ball(screen,
+                              randint(600, SCREEN_WIDTH - 100),
+                              randint(300, SCREEN_HEIGHT - 100),
+                              randint(20, 60),
+                              randint(-1, 1),
+                              randint(-1, 1),
+                              1)
+            self.erase()
+            targets.remove(self)
+            targets.append(new_target)
+
 
 
 class Ball(Target):
-    def __init__(self, screen: pygame.Surface, x = randint(600, 780), y = randint(300, 550), r = randint(2, 50), vx=0, vy=0):
+    def __init__(self, screen: pygame.Surface, x, y, r, vx, vy, live):
         """ Инициализация новой цели. """
-        self.x = x
-        self.y = y
+        super().__init__(screen, x, y, vx, vy, live)
         self.r = r
-        self.vx = vx
-        self.vy = vy
         self.color = RED
         self.screen = screen
+        self.targettype = 'Ball'
+
+    def move_ball(self):
+        if self.live:
+            super().move()
+        else:
+            pass
 
     def draw(self):
         pygame.draw.circle(
             self.screen,
             self.color,
+            (self.x, self.y),
+            self.r
+        )
+
+    def erase(self):
+        pygame.draw.circle(
+            self.screen,
+            BLACK,
             (self.x, self.y),
             self.r
         )
@@ -136,17 +173,17 @@ class Gun:
         """
         global bullets, bullet
         bullet += 1
-        new_ball = Bullet(self.screen,
+        new_bullet = Bullet(self.screen,
                           40 * math.cos(self.an),
                           450 + 40 * math.sin(self.an),
                           10,
-                          self.f2_power * math.cos(self.an),
-                          - self.f2_power * math.sin(self.an))
-        if event.pos[0]-new_ball.x == 0:
+                          self.f2_power * math.cos(self.an) // 3,
+                          - self.f2_power * math.sin(self.an) // 3)
+        if event.pos[0]-new_bullet.x == 0:
             self.an = math.pi/2
         else:
-            self.an = math.atan2((event.pos[1]-new_ball.y), (event.pos[0]-new_ball.x))
-        bullets.append(new_ball)
+            self.an = math.atan2((event.pos[1]-new_bullet.y), (event.pos[0]-new_bullet.x))
+        bullets.append(new_bullet)
         self.f2_on = 0
         self.f2_power = 10
 
@@ -163,13 +200,13 @@ class Gun:
             self.color = GREY
 
     def draw(self):
-        # FIXIT don't know how to do it
         pygame.draw.polygon(
             self.screen,
             self.color,
             ((0, 440),
              (0, 460),
-             (self.length * math.cos(self.an), 450 + self.length * math.sin(self.an))),
+             (self.length * math.cos(self.an), 450 + self.length * math.sin(self.an) + 5),
+             (self.length * math.cos(self.an), 450 + self.length * math.sin(self.an) - 5))
         )
 
     def power_up(self):
@@ -182,24 +219,54 @@ class Gun:
             self.color = GREY
             self.length = 20
 
-
+def score_points(points: int, prev_points: int):
+    """
+    Выводит на экран количество набранных очков
+    :param score:
+    """
+    f = pygame.font.Font(None, 36)
+    text = f.render('Score: ' + str(prev_points), 1, WHITE)
+    screen.blit(text, (24, 18))
+    text = f.render('Score: ' + str(points), 1, (180, 0, 0))
+    screen.blit(text, (24, 18))
 
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 bullet = 0
+prev_points = 0
+points = 0
 bullets = []
+targets = []
 
 clock = pygame.time.Clock()
 gun = Gun(screen)
-target = Ball(screen)
+targets.append(Ball(screen,
+                              randint(600, SCREEN_WIDTH - 100),
+                              randint(300, SCREEN_HEIGHT - 100),
+                              randint(20, 60),
+                              randint(-1, 1),
+                              randint(-1, 1),
+                    1))
+
+targets.append(Ball(screen,
+                              randint(600, SCREEN_WIDTH - 100),
+                              randint(300, SCREEN_HEIGHT - 100),
+                              randint(20, 60),
+                              randint(-1, 1),
+                              randint(-1, 1),
+                    1))
+
 finished = False
 
 while not finished:
     screen.fill(WHITE)
     gun.draw()
-    target.draw()
+    for t in targets:
+        t.draw()
     for b in bullets:
         b.draw()
+
+    score_points(points, prev_points)
     pygame.display.update()
 
     clock.tick(FPS)
@@ -215,10 +282,9 @@ while not finished:
 
     for b in bullets:
         b.move_bullet()
-        if b.hittest(target) and target.live:
-            target.live = 0
-            target.hit()
-            target.new_target()
+        for t in targets:
+            t.move_ball()
+            b.hittest(t)
     gun.power_up()
 
 pygame.quit()
